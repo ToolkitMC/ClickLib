@@ -1,7 +1,20 @@
 {
   "criteria": {
     "click": {
-      "trigger": "minecraft:player_hurt_entity"
+      "trigger": "minecraft:player_hurt_entity",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "tags": {
+                "values": ["clicklib.active"]
+              }
+            }
+          }
+        ]
+      }
     }
   },
   "rewards": {

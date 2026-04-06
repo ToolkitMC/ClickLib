@@ -1,1 +1,1 @@
-tellraw @s {"text":"[ClickLib Example] right click block","color":"green"}
+tellraw @s {"text":"[ClickLib] Right click on block!","color":"aqua","bold":false}

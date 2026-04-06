@@ -1,0 +1,92 @@
+name: Lint
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint:
+    name: Lint Datapack
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for @p usage
+        run: |
+          echo "Checking for @p usage in .mcfunction files..."
+          hits=$(grep -rn "@p" --include="*.mcfunction" . || true)
+          if [ -n "$hits" ]; then
+            echo "::error::@p found — use @s or @a[...] instead:"
+            echo "$hits"
+            exit 1
+          fi
+          echo "No @p found."
+
+      - name: Check for missing leading comment
+        run: |
+          echo "Checking for missing leading comments in .mcfunction files..."
+          failed=0
+          while IFS= read -r -d '' file; do
+            first=$(head -n 1 "$file")
+            if [[ "$first" != \#* ]]; then
+              echo "::warning file=$file::Missing leading comment in $file"
+              failed=1
+            fi
+          done < <(find . -name "*.mcfunction" -print0)
+          if [ "$failed" -eq 1 ]; then
+            exit 1
+          fi
+          echo "All .mcfunction files have leading comments."
+
+      - name: Check for empty .mcfunction files
+        run: |
+          echo "Checking for empty .mcfunction files..."
+          failed=0
+          while IFS= read -r -d '' file; do
+            if [ ! -s "$file" ]; then
+              echo "::error file=$file::Empty mcfunction file: $file"
+              failed=1
+            fi
+          done < <(find . -name "*.mcfunction" -print0)
+          if [ "$failed" -eq 1 ]; then
+            exit 1
+          fi
+          echo "No empty .mcfunction files found."
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON files..."
+          failed=0
+          while IFS= read -r -d '' file; do
+            if ! python3 -c "import json,sys; json.load(open('$file'))" 2>/dev/null; then
+              echo "::error file=$file::Invalid JSON: $file"
+              failed=1
+            fi
+          done < <(find . -name "*.json" -print0)
+          if [ "$failed" -eq 1 ]; then
+            exit 1
+          fi
+          echo "All JSON files are valid."
+
+      - name: Validate pack.mcmeta fields
+        run: |
+          echo "Validating pack.mcmeta..."
+          python3 - << 'PYEOF'
+          import json, sys, glob
+
+          for path in glob.glob("**/pack.mcmeta", recursive=True):
+            with open(path) as f:
+              data = json.load(f)
+            pack = data.get("pack", {})
+            if "pack_format" not in pack and "min_format" not in pack:
+              print(f"::error file={path}::Missing pack_format or min_format in {path}")
+              sys.exit(1)
+            if "description" not in pack:
+              print(f"::error file={path}::Missing description in {path}")
+              sys.exit(1)
+            print(f"OK: {path}")
+          PYEOF

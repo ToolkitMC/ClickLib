@@ -1,0 +1,103 @@
+name: Validate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  validate:
+    name: Validate Datapack Structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: |
+          echo "Checking required files..."
+          required=(
+            "pack.mcmeta"
+            "data/minecraft/tags/function/load.json"
+            "data/minecraft/tags/function/tick.json"
+            "data/clicklib/function/load.mcfunction"
+            "data/clicklib/function/tick.mcfunction"
+            "data/clicklib/function/enable.mcfunction"
+            "data/clicklib/function/disable.mcfunction"
+            "data/clicklib/function/query/is_active.mcfunction"
+          )
+          failed=0
+          for f in "${required[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Missing required file: $f"
+              failed=1
+            fi
+          done
+          if [ "$failed" -eq 1 ]; then exit 1; fi
+          echo "All required files present."
+
+      - name: Check required hook tags exist
+        run: |
+          echo "Checking hook tag files..."
+          tags=(
+            "data/clicklib/tags/function/left_click.json"
+            "data/clicklib/tags/function/left_click_entity.json"
+            "data/clicklib/tags/function/right_click.json"
+            "data/clicklib/tags/function/right_click_block.json"
+            "data/clicklib/tags/function/right_click_entity.json"
+            "data/clicklib/tags/function/on_enable.json"
+            "data/clicklib/tags/function/on_disable.json"
+            "data/clicklib/tags/function/tick_active.json"
+          )
+          failed=0
+          for f in "${tags[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Missing hook tag file: $f"
+              failed=1
+            fi
+          done
+          if [ "$failed" -eq 1 ]; then exit 1; fi
+          echo "All hook tag files present."
+
+      - name: Check tag files have valid 'values' array
+        run: |
+          echo "Checking tag JSON structure..."
+          python3 - << 'PYEOF'
+          import json, sys, glob
+
+          for path in glob.glob("data/**/tags/**/*.json", recursive=True):
+            with open(path) as f:
+              data = json.load(f)
+            if "values" not in data or not isinstance(data["values"], list):
+              print(f"::error file={path}::Tag file missing 'values' array: {path}")
+              sys.exit(1)
+          print("All tag files have valid 'values' arrays.")
+          PYEOF
+
+      - name: Check advancement JSON structure
+        run: |
+          echo "Checking advancement files..."
+          python3 - << 'PYEOF'
+          import json, sys, glob
+
+          for path in glob.glob("data/**/advancement/**/*.json", recursive=True):
+            with open(path) as f:
+              data = json.load(f)
+            if "criteria" not in data:
+              print(f"::error file={path}::Advancement missing 'criteria': {path}")
+              sys.exit(1)
+          print("All advancement files valid.")
+          PYEOF
+
+      - name: Check for internal function leakage into public tags
+        run: |
+          echo "Checking that internal/ functions are not referenced in public tags..."
+          hits=$(grep -rn "internal/" data/clicklib/tags/ || true)
+          if [ -n "$hits" ]; then
+            echo "::error::internal/ functions referenced in public tags:"
+            echo "$hits"
+            exit 1
+          fi
+          echo "No internal leakage found."

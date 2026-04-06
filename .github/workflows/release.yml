@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Build ZIP
+        run: |
+          zip -r "click-lib-${{ steps.version.outputs.version }}.zip" . \
+            --exclude "*.git*" \
+            --exclude ".github/*" \
+            --exclude "*.md" \
+            --exclude "LICENSE"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "ClickLib ${{ steps.version.outputs.version }}"
+          body: |
+            ## ClickLib ${{ steps.version.outputs.version }}
+
+            Vanilla click detection library for Minecraft Java Edition 1.21.6 (pack_format 88).
+
+            ### Installation
+            Download the ZIP below and place it in your world's `datapacks/` folder.
+
+            ### Changelog
+            See [README.md](README.md) for API reference.
+          files: "click-lib-${{ steps.version.outputs.version }}.zip"
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}

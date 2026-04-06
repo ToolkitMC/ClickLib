@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Get short SHA
         id: sha
@@ -28,9 +30,14 @@ jobs:
             --exclude "*.md" \
             --exclude "LICENSE"
 
+      - name: Build git bundle
+        run: git bundle create "click-lib-${{ steps.sha.outputs.short }}.bundle" --all
+
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: "click-lib-${{ steps.sha.outputs.short }}"
-          path: "click-lib-${{ steps.sha.outputs.short }}.zip"
+          path: |
+            click-lib-${{ steps.sha.outputs.short }}.zip
+            click-lib-${{ steps.sha.outputs.short }}.bundle
           retention-days: 30

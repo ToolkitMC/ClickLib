@@ -1,0 +1,10 @@
+{
+  "criteria": {
+    "click": {
+      "trigger": "minecraft:item_used_on_block"
+    }
+  },
+  "rewards": {
+    "function": "clicklib:internal/right_click_block"
+  }
+}

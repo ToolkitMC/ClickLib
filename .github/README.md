@@ -1,6 +1,6 @@
 # ClickLib
 
-Vanilla click detection library for Minecraft Java Edition **1.21.6** (pack_format 88).
+Vanilla click detection library for Minecraft Java Edition **1.21.x** (pack_format 48+).
 
 ## API
 

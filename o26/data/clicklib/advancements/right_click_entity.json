@@ -1,0 +1,23 @@
+{
+  "criteria": {
+    "click": {
+      "trigger": "minecraft:player_interacted_with_entity",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "tags": {
+                "values": ["clicklib.active"]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "function": "clicklib:internal/right_click_entity"
+  }
+}

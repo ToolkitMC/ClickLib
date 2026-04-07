@@ -3,10 +3,23 @@
     "pack_format": 61,
     "description": "ClickLib — Vanilla click detection library for Minecraft 1.21.6",
     "supported_formats": [
-      48,
+      18,
       101
     ],
-    "min_format": 48,
+    "min_format": 18,
     "max_format": 101
+  },
+  "overlays": {
+    "entries": [
+      {
+        "directory": "o26",
+        "formats": [
+          18,
+          26
+        ],
+        "min_format": 18,
+        "max_format": 26
+      }
+    ]
   }
 }
